@@ -7,13 +7,12 @@ Bundler.require(:default)
 
 EventMachine.run do
   AMQP.connect(:host => 'localhost') do |connection|
-    puts "starting client"
+    puts "Starting server"
 
     channel  = AMQP::Channel.new(connection)
     queue    = channel.queue("amqpgem.examples.hello_world")
+    exchange = channel.default_exchange
 
-    queue.subscribe do |payload|
-      puts "Receive: #{payload}. "
-    end
+    exchange.publish "The magic number is #{rand(20)}!", :routing_key => queue.name
   end
 end
