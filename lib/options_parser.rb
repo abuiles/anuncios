@@ -1,6 +1,8 @@
 module OptionsParser
-  def option opt, &block
-    @opts[opt] = block
+  def option (opt, use, &block)
+    @opts[opt] = {}
+    @opts[opt][:block] = block
+    @opts[opt][:use] = use
   end
 
   def call_option text
@@ -8,7 +10,7 @@ module OptionsParser
     opt = opts[0]
     args = opts[1..-1]
     if @opts.has_key? opt
-      @opts[opt].call(*args)
+      @opts[opt][:block].call(*args)
     else
       puts "#{opt} command not found."
     end
@@ -16,9 +18,9 @@ module OptionsParser
 
   def print_options
     puts "******************"
-    puts "available options"
+    puts "Available options"
     @opts.keys.sort.each do |opt|
-      puts opt
+      puts "#{opt} -- Usage: #{@opts[opt][:use]}"
     end
     puts "******************"
     puts "Select one:"

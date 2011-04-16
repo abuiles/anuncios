@@ -30,7 +30,7 @@ EventMachine.run do
     @opts = {} # Needed by the parser
 
     # Commands
-    option "quit" do
+    option "quit", "quit" do
       quit.call
     end
 
