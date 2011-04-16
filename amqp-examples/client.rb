@@ -10,9 +10,14 @@ EventMachine.run do
     puts "starting client"
 
     channel  = AMQP::Channel.new(connection)
-    queue    = channel.queue("amqpgem.examples.hello_world")
+    # Passing "" will make the server generate our own queue so we can listen to everything
+    # We have to set nowait to false because we need the response from the server so we
+    # know the queue name
+    queue    = channel.queue("",:nowait => false)
+    exchange = channel.fanout("example_fanout")
 
-    queue.subscribe do |payload|
+    # We set the queue listen to the example exchange
+    queue.bind(exchange).subscribe do |payload|
       puts "Receive: #{payload}. "
     end
   end

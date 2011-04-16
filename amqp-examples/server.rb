@@ -10,9 +10,8 @@ EventMachine.run do
     puts "Starting server"
 
     channel  = AMQP::Channel.new(connection)
-    queue    = channel.queue("amqpgem.examples.hello_world")
-    exchange = channel.default_exchange
+    exchange = channel.fanout("example_fanout")
 
-    exchange.publish "The magic number is #{rand(20)}!", :routing_key => queue.name
+    exchange.publish "The magic number is #{rand(20)}!"
   end
 end
