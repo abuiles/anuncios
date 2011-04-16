@@ -4,17 +4,18 @@
 require './lib/options_parser.rb'
 require "rubygems"
 require 'bundler'
+
 Bundler.require(:default)
 
 EventMachine.run do
   AMQP.connect(:host => 'localhost') do |connection|
-    puts "starting consumer"
-
+    
     channel  = AMQP::Channel.new(connection)
     # Passing "" will make the server generate our own queue so we can listen to everything
     # We have to set nowait to false because we need the response from the server so we
     # know the queue name
     queue    = channel.queue("",:nowait => false)
+
 
     # Exit function, close the connection and stops the event machine
     quit = Proc.new {
@@ -40,12 +41,11 @@ EventMachine.run do
     end
 
     option "subscribe" do |fanout|
-      # For now the fanout is irrelevant, it always subscribe to the same      
-      exchange = channel.fanout("example_fanout")
-
+      exchange = channel.fanout(fanout)
       queue.bind(exchange).subscribe do |payload|
-        puts "Receive: #{payload}. "
-      end     
+        puts "Receive: #{payload}."
+      end
+      puts "Subscribed to #{fanout}"
     end
     
     # Main loop, run in defer mode to allow the blocking IO

@@ -34,9 +34,18 @@ EventMachine.run do
       quit.call
     end
 
+    option "create" do |fanout|
+      if fanout.nil?
+        puts "You have to enter the name of the exchange"
+      else
+        channel.fanout(fanout)
+        puts "#{fanout} created"
+      end
+    end
+
     option "send" do |fanout, *args|
-      # For now the fanout is irrelevant, it always send to the same
-      channel.fanout("example_fanout").publish(*args.join(" "))     
+        channel.fanout(fanout).publish(*args.join(" "))
+        puts "Message Sent"
     end
     
     # Main loop, run in defer mode to allow the blocking IO
