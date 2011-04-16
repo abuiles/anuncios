@@ -47,11 +47,12 @@ EventMachine.run do
         channel.fanout(fanout).publish(*args.join(" "))
         puts "Message Sent"
     end
-    
+
     # Main loop, run in defer mode to allow the blocking IO
     # to work in conjunction with event machine
     operation = Proc.new {
       while true
+        print_options
         command = gets
         unless command.length == 1
           command.slice!(-1)
