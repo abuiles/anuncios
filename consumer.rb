@@ -35,11 +35,11 @@ EventMachine.run do
     @opts = {} # Needed by the parser
 
     # Commands
-    option "quit" do
+    option "quit", "quit" do
       quit.call
     end
 
-    option "subscribe" do |fanout|
+    option "subscribe", "subscribe soccer" do |fanout|
       exchange = channel.fanout(fanout)
       queue.bind(exchange).subscribe do |payload|
         puts "Receive: #{payload}."

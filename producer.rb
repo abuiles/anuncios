@@ -34,7 +34,7 @@ EventMachine.run do
       quit.call
     end
 
-    option "create" do |fanout|
+    option "create", "create soccer" do |fanout|
       if fanout.nil?
         puts "You have to enter the name of the exchange"
       else
@@ -43,7 +43,7 @@ EventMachine.run do
       end
     end
 
-    option "send" do |fanout, *args|
+    option "send", "create soccer real madrid sucks" do |fanout, *args|
         channel.fanout(fanout).publish(*args.join(" "))
         puts "Message Sent"
     end
