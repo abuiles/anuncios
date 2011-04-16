@@ -36,13 +36,14 @@ EventMachine.run do
 
     option "send" do |fanout, *args|
       # For now the fanout is irrelevant, it always send to the same
-      channel.fanout("example_fanout").publish(*args.join(" "))     
+      channel.fanout("example_fanout").publish(*args.join(" "))
     end
-    
+
     # Main loop, run in defer mode to allow the blocking IO
     # to work in conjunction with event machine
     operation = Proc.new {
       while true
+        print_options
         command = gets
         unless command.length == 1
           command.slice!(-1)
