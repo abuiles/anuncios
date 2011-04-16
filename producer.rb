@@ -1,64 +1,55 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
 require './lib/options_parser.rb'
+require "rubygems"
+require 'bundler'
+Bundler.require(:default)
 
-include OptionsParser
+EventMachine.run do
+  AMQP.connect(:host => 'localhost') do |connection|
+    puts "starting producer"
 
-# Array with the options
-@opts = {}
+    channel  = AMQP::Channel.new(connection)
 
-# Exit function
-# Close the connection and other stuff
-def quit
-  puts "Bye =)"
-  exit
-end
+    # Exit function
+    quit = Proc.new {
+      connection.close do
+        EM.stop
+        puts "Bye"
+        exit
+      end
+    }
 
-# Options
-option "help" do
-  opts = <<-OPTS
-list
-send <topic> <message>
-create <topic>
-quit
-OPTS
-  puts opts
-end
+    Signal.trap "INT", quit
+    Signal.trap "TERM", quit
 
-option "list" do
-  puts "List all topics"
-end
+    # Client logic below
 
-option "send" do |*args|
-  topic = args[0]
-  text = args[1..-1].join(" ")
-  if(args.length < 2)
-    puts "To few parameters for the send option"
-  else
-    puts "Sending #{text} to #{topic} topic"
-  end
-end
+    include OptionsParser
+    @opts = {} # Needed by the parser
 
-option "create" do |*args|
-  if(args.length < 1)
-    puts "To few parameters for the create option"
-  else
-    puts "Creating #{args[0]} topic"
-  end
-end
+    # Commands
+    option "quit" do
+      quit.call
+    end
 
-option "quit" do
-  quit
-end
-
-# The exit interruption
-trap :INT do
-  quit
-end
-
-
-while true
-  command = STDIN.gets
-  unless command.length == 1
-    command.slice!(-1)
-    call_option command
+    option "send" do |fanout, *args|
+      # For now the fanout is irrelevant, it always send to the same
+      channel.fanout("example_fanout").publish(*args.join(" "))     
+    end
+    
+    # Main loop, run in defer mode to allow the blocking IO
+    # to work in conjunction with event machine
+    operation = Proc.new {
+      while true
+        command = gets
+        unless command.length == 1
+          command.slice!(-1)
+          call_option command
+        end
+      end
+    }
+    EventMachine.defer(operation,nil)
   end
 end

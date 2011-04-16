@@ -1,54 +1,65 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+
 require './lib/options_parser.rb'
+require "rubygems"
+require 'bundler'
+Bundler.require(:default)
 
-include OptionsParser
+EventMachine.run do
+  AMQP.connect(:host => 'localhost') do |connection|
+    puts "starting consumer"
 
-# Array with the options (Required by the parser)
-@opts = {}
+    channel  = AMQP::Channel.new(connection)
+    # Passing "" will make the server generate our own queue so we can listen to everything
+    # We have to set nowait to false because we need the response from the server so we
+    # know the queue name
+    queue    = channel.queue("",:nowait => false)
 
-# Exit function
-# Close the connection and other stuff
-def quit
-  puts "Bye =)"
-  exit
-end
+    # Exit function, close the connection and stops the event machine
+    quit = Proc.new {
+      connection.close do
+        EM.stop
+        puts "Bye"
+        exit
+      end
+    }
 
-# Options
-option "help" do
-  opts = <<-OPTS
-list
-subscribe <topic>
-quit
-OPTS
-  puts opts
-end
+    # Trap the terminate signals
+    Signal.trap "INT", quit
+    Signal.trap "TERM", quit
 
-option "list" do
-  puts "List all topics"
-end
+    # Client logic below
 
-option "subscribe" do |*args|
-  if(args.length < 1)
-    puts "To few parameters for the create option"
-  else
-    topic = args[0]
-    puts "Subscribing to #{topic}"
+    include OptionsParser
+    @opts = {} # Needed by the parser
+
+    # Commands
+    option "quit" do
+      quit.call
+    end
+
+    option "subscribe" do |fanout|
+      # For now the fanout is irrelevant, it always subscribe to the same      
+      exchange = channel.fanout("example_fanout")
+
+      queue.bind(exchange).subscribe do |payload|
+        puts "Receive: #{payload}. "
+      end     
+    end
+    
+    # Main loop, run in defer mode to allow the blocking IO
+    # to work in conjunction with event machine
+    operation = Proc.new {
+      while true
+        command = gets
+        unless command.length == 1
+          command.slice!(-1)
+          call_option command
+        end
+      end
+    }
+    EventMachine.defer(operation,nil)
   end
 end
 
-option "quit" do
-  quit
-end
-
-# The exit interruption
-trap :INT do
-  quit
-end
-
-
-while true
-  command = STDIN.gets
-  unless command.length == 1
-    command.slice!(-1)
-    call_option command
-  end
-end
