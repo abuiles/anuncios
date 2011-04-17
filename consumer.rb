@@ -66,6 +66,18 @@ EventMachine.run do
       end
     end
 
+    option "list", "list" do
+      exchanges = `rabbitmqctl list_exchanges`
+      topics= exchanges.lines.map{ |line| line[/(.*)\tfanout/, 1] }
+      topics.compact!
+      topics.delete_if{|topic| topic == 'amq.fanout'}
+      puts "\n**********************************************"
+      puts "You can subscribe to any of the following topics"
+      topics.each{|exchange| puts exchange}
+      puts "\nExample of subcription: subcribe #{topics[rand(topics.size)]}"
+      puts "\n**********************************************"
+    end
+
     # Main loop, run in defer mode to allow the blocking IO
     # to work in conjunction with event machine
     operation = Proc.new {
