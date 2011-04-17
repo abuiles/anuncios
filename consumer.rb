@@ -1,10 +1,14 @@
 #!/usr/bin/env ruby
 # encoding: utf-8
 
+require 'drb'
 require './lib/options_parser.rb'
 require "rubygems"
 require 'bundler'
 Bundler.require(:default)
+
+# URL to the service that tells the list of queues
+service = ARGV[1] || "localhost:9000"
 
 EventMachine.run do
   AMQP.connect(:host => 'localhost') do |connection|
@@ -39,19 +43,34 @@ EventMachine.run do
       quit.call
     end
 
+    option "help", "help" do
+      print_options
+    end
+
+    option "list", "list" do
+      puts "The current exchanges are:"
+      exchanges = DRbObject.new nil, 'druby://'+ service
+      puts exchanges
+    end
+
     option "subscribe", "subscribe soccer" do |fanout|
-      exchange = channel.fanout(fanout)
-      queue.bind(exchange).subscribe do |payload|
+      exchanges = DRbObject.new nil, 'druby://'+ service
+      if exchanges.include?(fanout)        
+        exchange = channel.fanout(fanout)
+        queue.bind(exchange).subscribe do |payload|
         puts "Receive: #{payload}."
+        end
+        puts "Subscribed to #{fanout}"
+      else
+        puts "The exchange #{fanout} doesn't exists"
       end
-      puts "Subscribed to #{fanout}"
     end
 
     # Main loop, run in defer mode to allow the blocking IO
     # to work in conjunction with event machine
     operation = Proc.new {
+      print_options
       while true
-        print_options
         command = gets
         unless command.length == 1
           command.slice!(-1)
