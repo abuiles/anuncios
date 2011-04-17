@@ -8,7 +8,6 @@ How to
         2. Install Ruby 1.9.2.
         3. Install bundler.
         4. Run the following command to install all the dependencies.
-
                bundle install
 
         5. Run the topics listening service with:
