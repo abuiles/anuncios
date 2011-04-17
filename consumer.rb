@@ -47,14 +47,9 @@ EventMachine.run do
       print_options
     end
 
-    option "list", "list" do
-      puts "The current exchanges are:"
-      exchanges = DRbObject.new nil, 'druby://'+ service
-      puts exchanges
-    end
-
     option "subscribe", "subscribe soccer" do |fanout|
-      exchanges = DRbObject.new nil, 'druby://'+ service
+      service = DRbObject.new nil, 'druby://'+ service
+      exchanges = service.list_exchanges
       if exchanges.include?(fanout)        
         exchange = channel.fanout(fanout)
         queue.bind(exchange).subscribe do |payload|
@@ -67,13 +62,11 @@ EventMachine.run do
     end
 
     option "list", "list" do
-      exchanges = `rabbitmqctl list_exchanges`
-      topics= exchanges.lines.map{ |line| line[/(.*)\tfanout/, 1] }
-      topics.compact!
-      topics.delete_if{|topic| topic == 'amq.fanout'}
+      service = (DRbObject.new nil, 'druby://'+ service)
+      topics = service.list_exchanges
       puts "\n**********************************************"
       puts "You can subscribe to any of the following topics"
-      topics.each{|exchange| puts exchange}
+      puts topics
       puts "\nExample of subcription: subcribe #{topics[rand(topics.size)]}"
       puts "\n**********************************************"
     end
