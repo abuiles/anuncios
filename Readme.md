@@ -10,7 +10,7 @@ How to
         4. Run the following command to install all the dependencies.
                bundle install
 
-        5. Run the topics listening service with:
+        5. Run the topics listing service with:
                ruby service.rb # if you are in Linux
                service_mac.rb  # if you are in a OSX.
 
