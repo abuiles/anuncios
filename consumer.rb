@@ -8,7 +8,7 @@ require 'bundler'
 Bundler.require(:default)
 
 # URL to the service that tells the list of queues
-service = ARGV[1] || "localhost:9000"
+service_url = ARGV[1] || "localhost:9000"
 
 EventMachine.run do
   AMQP.connect(:host => 'localhost') do |connection|
@@ -48,13 +48,18 @@ EventMachine.run do
     end
 
     option "subscribe", "subscribe soccer" do |fanout|
-      service = DRbObject.new nil, 'druby://'+ service
+      service = (DRbObject.new nil, 'druby://'+ service_url)
       exchanges = service.list_exchanges
-      if exchanges.include?(fanout)        
+      if exchanges.include?(fanout)
         exchange = channel.fanout(fanout)
-        queue.bind(exchange).subscribe do |payload|
-        puts "Receive: #{payload}."
+
+        begin
+          queue.bind(exchange).subscribe do |payload|
+            puts "#{payload}"
+          end
+        rescue
         end
+
         puts "Subscribed to #{fanout}"
       else
         puts "The exchange #{fanout} doesn't exists"
@@ -62,7 +67,7 @@ EventMachine.run do
     end
 
     option "list", "list" do
-      service = (DRbObject.new nil, 'druby://'+ service)
+      service = (DRbObject.new nil, 'druby://'+ service_url)
       topics = service.list_exchanges
       puts "\n**********************************************"
       puts "You can subscribe to any of the following topics"

@@ -1,9 +1,12 @@
 require 'drb'
 
+# The difference between this and the linux one is that the
+# command in this one is caled without sudo
+
 class Service
 
   def list_exchanges
-    exchanges = `sudo rabbitmqctl list_exchanges`
+    exchanges = `rabbitmqctl list_exchanges`
     puts exchanges
     topics = exchanges.lines.map{ |line| line[/(.*)\tfanout/, 1] }
     topics.compact!
