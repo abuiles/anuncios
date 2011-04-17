@@ -43,6 +43,13 @@ EventMachine.run do
       end
     end
 
+    option "delete", "delete soccer" do |fanout|
+      channel.fanout(fanout).publish("This channel won't be available after #{Time.now}")
+      puts "Notification sent, deleting.."
+      channel.fanout(fanout).delete(:nowait => false)
+    end
+
+
     option "send", "create soccer real madrid sucks" do |fanout, *args|
         channel.fanout(fanout).publish(*args.join(" "))
         puts "Message Sent"
